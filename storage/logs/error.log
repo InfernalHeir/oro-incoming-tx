@@ -1,4 +1,0 @@
-[31merror[39m: BAD_REQUEST: one bad request found from ::1
-[31merror[39m: Transfers: invalid json response body at https://api.better-call.dev/v1/contract/mainnet/KT1S6t5PrHXnozytDU3vYdajmsenoBNYY8WJ/transfers0 reason: Unexpected token p in JSON at position 4
-[31merror[39m: Transfers: invalid json response body at https://api.better-call.dev/v1/contract/mainnet/KT1S6t5PrHXnozytDU3vYdajmsenoBNYY8WJ/transfers0 reason: Unexpected token p in JSON at position 4
-[31merror[39m: BAD_REQUEST: one bad request found from ::1
