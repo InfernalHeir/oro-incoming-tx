@@ -51,7 +51,11 @@ export const syncTransactionsProcesser = async (tokenId: number) => {
     // store the new offset value
     const isStore = await storeOffset(String(tokenId), String(newOffset));
     if (isStore) {
-      logger.info(`synced at ${new Date().getTime() / 1000} time.`);
+      logger.info(
+        `synced at ${
+          new Date().getTime() / 1000
+        } time. new offset is ${newOffset}`
+      );
     } else {
       logger.error(`may be something wrong went with redis`);
     }
