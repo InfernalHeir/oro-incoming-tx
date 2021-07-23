@@ -22,8 +22,7 @@ export const syncTransactionsProcesser = async (tokenId: number) => {
     const transactions = await Transfers(tokenId, Number(latestOffset));
     const txsFilter = transactionsFilter(transactions?.transfers);
     const totalRounds = Number(transactions?.total);
-    console.log("latestOffset", latestOffset);
-    console.log("totalRounds", totalRounds);
+
     if (_.isEmpty(txsFilter) || Number(latestOffset) >= totalRounds) {
       logger.info("No Incoming Transactions Found");
       return null;

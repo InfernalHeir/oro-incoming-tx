@@ -59,7 +59,7 @@ export const getAllAccounts = async () => {
 export const transactionsFilter = (transactions: any[]) => {
   if (_.isEmpty(transactions)) return null;
   return transactions.filter((e) => {
-    return e.entrypoint === "transfer" && e?.parent === undefined;
+    return e.entrypoint === "transfer";
   });
 };
 
