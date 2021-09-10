@@ -3,7 +3,7 @@ import { logger } from "./logger";
 import { syncTransactionsProcesser } from "./process";
 
 export const goldTransfersSync = new CronJob(
-  "* * * * *",
+  "*/5 * * * *",
   async () => {
     try {
       const tokenId = 0;
