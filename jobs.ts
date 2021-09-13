@@ -3,7 +3,7 @@ import { logger } from "./logger";
 import { syncTransactionsProcesser } from "./process";
 
 export const goldTransfersSync = new CronJob(
-  "*/5 * * * *",
+  "*/10 * * * * *",
   async () => {
     try {
       const tokenId = 0;
@@ -19,7 +19,7 @@ export const goldTransfersSync = new CronJob(
 );
 
 export const sliverTransfersSync = new CronJob(
-  "*/5 * * * *",
+  "*/10 * * * * *",
   async () => {
     try {
       const tokenId = 1;

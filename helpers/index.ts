@@ -13,12 +13,13 @@ import redis from "redis";
 import { config } from "../config";
 import { promisify } from "util";
 
-export const Transfers = async (tokenId: number, offset: number | null) => {
+export const Transfers = async (tokenId: number, last_id: number | null) => {
   try {
-    if (tokenId !== undefined || offset) {
+    if (tokenId !== undefined || last_id) {
       const Token = tokens[tokenId];
+      const query = last_id ? `&last_id=${last_id}` : ''; 
       const result = await fetch(
-        `${BASEURL}/v1/contract/${NETWORK}/${Token}/transfers/?offset=${offset}`
+        `${BASEURL}/v1/contract/${NETWORK}/${Token}/operations/?entrypoints=transfer&${query}`
       );
       const formatedResult = await result.json();
       return formatedResult;
@@ -73,14 +74,14 @@ export const configToken = async (): Promise<boolean> => {
 
 export const storeOffset = async (
   tokenId: string,
-  newOffset: string
+  newLastId: string
 ): Promise<boolean> => {
-  const update: boolean = await client.set(`Offset_${tokenId}`, newOffset);
+  const update: boolean = await client.set(`last_id_${tokenId}`, newLastId);
   return update;
 };
 
-export const getLatestOffset = async (tokenId: string): Promise<number> => {
-  const offset = await getAsync(`Offset_${tokenId}`);
+export const getLastId = async (tokenId: string): Promise<number> => {
+  const offset = await getAsync(`last_id_${tokenId}`);
   return Number(offset);
 };
 
