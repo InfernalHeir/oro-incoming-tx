@@ -31,7 +31,6 @@ export const Transfers = async (tokenId: number, last_id: number | null) => {
 
 export const client = redis.createClient({
   host: config.REDIS_HOSTNAME,
-  password: config.REDIS_PASSWORD,
   port: 6379,
 });
 
