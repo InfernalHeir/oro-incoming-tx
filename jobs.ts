@@ -19,7 +19,7 @@ export const goldTransfersSync = new CronJob(
 );
 
 export const sliverTransfersSync = new CronJob(
-  "*/30 * * * * *",
+  "* * * * *",
   async () => {
     try {
       const tokenId = 1;

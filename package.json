@@ -8,7 +8,7 @@
     "clean": "rimraf ./dist",
     "killport": "kill-port --port 1337",
     "build": "babel ./ --extensions '.ts' --out-dir ./dist --config-file ./.babelrc --no-copy-ignored --copy-files && rm -rf ./dist/node_modules ./dist/package.json ./dist/tsconfig.json",
-    "server": "pm2 start -f ./dist/src/server.js --name oro-incoming-tx",
+    "server": "pm2 start -f ./dist/server.js --name oro-incoming-tx",
     "start": "export NODE_ENV=prod && npm-run-all clean killport build server"
   },
   "dependencies": {
