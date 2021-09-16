@@ -1,62 +1,109 @@
 import {
-  getAsync,
-  getLastId,
-  storeOffset,
+  getFetchingPoints,
+  getVaryingOffset,
+  outputedTransactions,
+  setVaryingOffset,
+  storeFetchingPoints,
+  storeLastId,
   syncDB,
-  transactionsFilter,
   Transfers,
 } from "./helpers";
 import { logger } from "./logger";
 import _ from "lodash";
 import { tokens } from "./constants";
+import emoji from "node-emoji";
 
 export const syncTransactionsProcesser = async (tokenId: number) => {
   try {
-    const last_id = await getLastId(String(tokenId));
+    var recordCount = await getFetchingPoints(String(tokenId));
 
-    if (tokenId === undefined || last_id === undefined) {
-      logger.error(`TokenId or Offset should not be undefined`);
-      throw new Error("TokenId or Offset should not be undefined");
+    const varyingOffset = await getVaryingOffset(String(tokenId));
+
+    // console.log(last_id_intervals);
+    if (tokenId === undefined || recordCount === undefined) {
+      logger.error(`MailFormed Params Sync Failed..`);
+      throw new Error("MailFormed Params Sync Failed..");
     }
 
-    const transactions = await Transfers(tokenId, Number(last_id));
+    // calculate offset for every call
+    var offset = varyingOffset.currentOffset;
 
-    const operations = transactionsFilter(transactions?.operations);
-    const last_id_result = Number(transactions?.last_id);
+    logger.info(`Searching New Transaction on Given Offset`);
 
-    if (_.isEmpty(operations) || Number(last_id) >= last_id_result) {
-      logger.info("No Incoming Transactions Found");
-      return null;
+    const transactions = await Transfers(tokenId, offset);
+
+    const transfers = outputedTransactions(transactions.transfers);
+
+    const total_row = Number(transactions.total);
+
+    // here we decide new offset
+    if (Number(recordCount) === Number(total_row)) {
+      // store the current offset to 0.
+      await setVaryingOffset(String(tokenId), {
+        from: 0,
+        to: 0,
+        currentOffset: 0,
+      });
+
+      logger.info("Sync Failed: No Incoming Transactions Found");
+
+      return;
     }
 
-    const sync = operations?.map((items) => {
+    const sync = transfers?.map((items) => {
       return {
-        to_address: items.parameters[0].children[1].value,
-        from_address: items.parameters[0].children[0].value,
-        quantity: String(_.divide(Number(items.parameters[0].children[2].value), 10 ** 6)),
+        to_address: items.to,
+        from_address: items.from,
+        quantity: String(_.divide(Number(items.amount), 10 ** 6)),
         asset:
-          String(items.destination).toLowerCase() === tokens[0].toLowerCase()
+          String(items.token.contract).toLowerCase() === tokens[0].toLowerCase()
             ? "GOLD"
             : "SILVER",
-        fee: items.fee,
+        fee: "0",
         tx: items.hash,
+        status: items.status === "applied" ? true : false,
       };
     });
 
     // sync all data in DB
     await syncDB(sync);
 
+    // 28 - 10 = 10th index -> remaining 18 transactions
+    // 30 total - 28 fetching point = 2;
+    // 30 current offset -> 32(2) transansactions
 
-    // store the new offset value
-    const isStore = await storeOffset(String(tokenId),String(last_id_result));
-    if (isStore) {
+    var remaining = (total_row - recordCount) > 10 ? 10 : (total_row - recordCount);
+
+    const newfetchingPoint = _.add(recordCount, remaining);
+
+    await storeFetchingPoints(String(tokenId), newfetchingPoint);
+
+    var currentOffset: number;
+    
+    if(recordCount > 0 && (total_row - recordCount) > 10){
+      // then current offset incraesing by 10
+      currentOffset = _.add(varyingOffset.currentOffset,10);
+    }else if(recordCount > 0 && (total_row - recordCount) < 10){
+      currentOffset = _.add(varyingOffset.currentOffset,(total_row - recordCount));
+    }
+    else {
+      currentOffset = newfetchingPoint;  
+    }
+
+    const stored = await setVaryingOffset(String(tokenId), {
+      to: 0,
+      from: 0,
+      currentOffset,
+    });
+
+    if (stored) {
       logger.info(
         `synced at ${
           new Date().getTime() / 1000
-        } time. new last_id is ${last_id_result}`
+        } time. new fetching point is ${newfetchingPoint}`
       );
     } else {
-      logger.error(`may be something wrong went with redis`);
+      logger.error(`Sync Failed: Operation denied Key__ not stored`);
     }
   } catch (err) {
     logger.error(

@@ -4,8 +4,9 @@ import morgon from "morgan";
 import cors from "cors";
 import { logger } from "./logger";
 import { config } from "./config";
-import { configToken, storeOffset } from "./helpers";
-import { goldTransfersSync, sliverTransfersSync } from "./jobs";
+import { configToken, setVaryingOffset, storeFetchingPoints, storeLastId } from "./helpers";
+import { goldTransfersSync , sliverTransfersSync } from "./jobs";
+import { tokens } from "./constants";
 
 const app: Application = express();
 const PORT = config.PORT;
@@ -33,17 +34,28 @@ app.use(
   })
 );
 
-app.post("/resetOffset", async (req: Request, res: Response) => {
+app.post("/reset-settings", async (req: Request, res: Response) => {
   try {
-    const offset = req.body.offset;
+    const from  = req.body.from;
+    const to = req.body.to;
+    const currentOffset = req.body.currentOffset;
     const tokenId = req.body.tokenId;
-    await storeOffset(tokenId, offset);
+
+    await setVaryingOffset(String(tokenId),{
+      from,
+      to,
+      currentOffset
+    });
+
+    await storeFetchingPoints(String(tokenId),"0");
+    
     return res.json({
       code: 200,
-      data: "Offset Updated.",
+      data: `Settings Reset for TokenId ${tokens[tokenId]}`,
     });
+
   } catch (err) {
-    logger.error(`resetOffset failed: ${err.message}`);
+    logger.error(`Settings reset failed: ${err.message}`);
   }
 });
 

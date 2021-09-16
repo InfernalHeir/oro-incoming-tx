@@ -13,13 +13,12 @@ import redis from "redis";
 import { config } from "../config";
 import { promisify } from "util";
 
-export const Transfers = async (tokenId: number, last_id: number | null) => {
+export const Transfers = async (tokenId: number, offset: number | null) => {
   try {
-    if (tokenId !== undefined || last_id) {
+    if (tokenId !== undefined || offset) {
       const Token = tokens[tokenId];
-      const query = last_id ? `&last_id=${last_id}` : ''; 
       const result = await fetch(
-        `${BASEURL}/v1/contract/${NETWORK}/${Token}/operations/?entrypoints=transfer&${query}`
+        `${BASEURL}/v1/contract/${NETWORK}/${Token}/transfers/?&offset=${offset}`
       );
       const formatedResult = await result.json();
       return formatedResult;
@@ -56,11 +55,57 @@ export const getAllAccounts = async () => {
   }
 };
 
-export const transactionsFilter = (transactions: any[]) => {
+export const outputedTransactions = (transactions: any[]) => {
   if (_.isEmpty(transactions)) return null;
   return transactions.filter((e) => {
     return e.entrypoint === "transfer";
   });
+};
+
+export const storeFetchingPoints = async (
+  tokenId: string,
+  newFetchingPoints: string
+): Promise<boolean> => {
+  const isUpdated = await client.set(
+    `fetching_points_${tokenId}`,
+    newFetchingPoints
+  );
+  return isUpdated;
+};
+
+export const getFetchingPoints = async (tokenId: string) => {
+  const fetchingPoints = await getAsync(`fetching_points_${tokenId}`);
+  return Number(fetchingPoints);
+};
+
+interface VaryingOffset {
+  from: number,
+  to: number,
+  currentOffset: number
+}
+
+export const setVaryingOffset = async (
+  tokenId: string,
+  opts: VaryingOffset
+): Promise<boolean> => {
+  const varyingOffset = JSON.stringify(opts);
+  const isUpdated = await client.set(
+    `varting_offset_${tokenId}`,
+    varyingOffset
+  );
+  return isUpdated;
+};
+
+export const getVaryingOffset = async (tokenId: string): Promise<VaryingOffset> => {
+  const varyingOffset = await getAsync(`varting_offset_${tokenId}`);
+  if(!varyingOffset){
+    return {
+      from: 0,
+      to: 0,
+      currentOffset: 0
+    }
+  }
+  return JSON.parse(String(varyingOffset));
 };
 
 export const configToken = async (): Promise<boolean> => {
@@ -71,7 +116,7 @@ export const configToken = async (): Promise<boolean> => {
   return updated;
 };
 
-export const storeOffset = async (
+export const storeLastId = async (
   tokenId: string,
   newLastId: string
 ): Promise<boolean> => {
@@ -80,8 +125,8 @@ export const storeOffset = async (
 };
 
 export const getLastId = async (tokenId: string): Promise<number> => {
-  const offset = await getAsync(`last_id_${tokenId}`);
-  return Number(offset);
+  const last_id = await getAsync(`last_id_${tokenId}`);
+  return Number(last_id);
 };
 
 export interface Transactions {
@@ -91,6 +136,7 @@ export interface Transactions {
   asset: string;
   fee: string;
   tx: string;
+  status: boolean;
 }
 
 export const syncDB = async (sync: Transactions[] | undefined) => {

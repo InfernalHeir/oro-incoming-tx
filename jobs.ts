@@ -3,7 +3,7 @@ import { logger } from "./logger";
 import { syncTransactionsProcesser } from "./process";
 
 export const goldTransfersSync = new CronJob(
-  "*/10 * * * * *",
+  "* * * * *",
   async () => {
     try {
       const tokenId = 0;
@@ -19,7 +19,7 @@ export const goldTransfersSync = new CronJob(
 );
 
 export const sliverTransfersSync = new CronJob(
-  "*/10 * * * * *",
+  "*/30 * * * * *",
   async () => {
     try {
       const tokenId = 1;
@@ -32,4 +32,4 @@ export const sliverTransfersSync = new CronJob(
   null,
   true,
   "Asia/Kolkata"
-);
+ );
