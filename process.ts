@@ -72,22 +72,24 @@ export const syncTransactionsProcesser = async (tokenId: number) => {
     // 30 total - 28 fetching point = 2;
     // 30 current offset -> 32(2) transansactions
 
-    var remaining = (total_row - recordCount) > 10 ? 10 : (total_row - recordCount);
+    var remaining = total_row - recordCount > 10 ? 10 : total_row - recordCount;
 
     const newfetchingPoint = _.add(recordCount, remaining);
 
     await storeFetchingPoints(String(tokenId), newfetchingPoint);
 
     var currentOffset: number;
-    
-    if(recordCount > 0 && (total_row - recordCount) > 10){
+
+    if (recordCount > 0 && total_row - recordCount > 10) {
       // then current offset incraesing by 10
-      currentOffset = _.add(varyingOffset.currentOffset,10);
-    }else if(recordCount > 0 && (total_row - recordCount) < 10){
-      currentOffset = _.add(varyingOffset.currentOffset,(total_row - recordCount));
-    }
-    else {
-      currentOffset = newfetchingPoint;  
+      currentOffset = _.add(varyingOffset.currentOffset, 10);
+    } else if (recordCount > 0 && total_row - recordCount < 10) {
+      currentOffset = _.add(
+        varyingOffset.currentOffset,
+        total_row - recordCount
+      );
+    } else {
+      currentOffset = newfetchingPoint;
     }
 
     const stored = await setVaryingOffset(String(tokenId), {
